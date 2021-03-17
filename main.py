@@ -11,13 +11,15 @@ class Game(object):
         super().__init__()
         self.surface: pygame.Surface = None
         self.__running = False
+        self.__sim_running = False
         self.cells = [] # 0=dead, 1=alive
 
     def init_game(self):
         pygame.init()
         self.surface = pygame.display.set_mode((WIDTH, HEIGHT))
-        self.__running = True
+        pygame.display.set_caption('Conways Game of Life')
         self.__init_cells()
+        self.__running = True
 
 
     def run(self):
@@ -29,20 +31,51 @@ class Game(object):
             current_time = datetime.now().timestamp()
             elapsed = current_time - last_time
             lag += elapsed
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.__running = False
                     pygame.quit()
                     return
+                self.__input(event)
+
             
             while lag >= MS_PER_UPDATE:
-                self.__update()
+                if self.__sim_running:
+                    self.__update()
                 lag -= MS_PER_UPDATE
             self.__render()
             pygame.display.flip()
 
             last_time = current_time
+
+
+    def __input(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                self.__sim_running = not self.__sim_running
+            
+            if not self.__sim_running:
+                if event.key == pygame.K_s:
+                    self.__save_cell_state_to_disk()
+                if event.key == pygame.K_l:
+                    self.__load_cell_state_from_disk()
+            
+        if not self.__sim_running:
+            if pygame.mouse.get_pressed():
+                pos = pygame.mouse.get_pos()
+                # calc rect that was pressed
+                ry = pos[1] % CH
+                rx = pos[0] % CW
+                y = (pos[1] - ry) 
+                x = (pos[0] - rx) 
+                if 0 <= x <= WIDTH and 0 <= y <= HEIGHT:
+                    ix = int(x/CW)
+                    iy = int(y/CH)
+                    state = self.cells[iy][ix]
+                    if pygame.mouse.get_pressed()[0]: # left click
+                        self.cells[iy][ix] = 1
+                    elif pygame.mouse.get_pressed()[2]: # right click
+                        self.cells[iy][ix] = 0
 
 
     def __update(self):
@@ -91,15 +124,44 @@ class Game(object):
 
 
     def __init_cells(self):
-        rand = random.Random()
-        rand.seed(datetime.now().microsecond)
+        # rand = random.Random()
+        # rand.seed(datetime.now().microsecond)
         self.cells = list()
         for y in range(int(HEIGHT/CH)):
             self.cells.append(list())
             for x in range(int(WIDTH/CW)):
-                state = rand.randint(0, 1)
+                # state = rand.randint(0, 1)
+                state = 0
                 self.cells[y].append(state)
-        
+
+
+    def __save_cell_state_to_disk(self):
+        s = f'{WIDTH} {HEIGHT}\n'
+        name = str(input("enter name of save: "))
+        for row in self.cells:
+            for col in row:
+                s += str(col)+' '
+            s += '\n'
+        try:
+            with open(f'{name}.txt', 'w') as f:
+                f.write(s)
+                f.close()
+            return True
+        except:
+            return False
+    
+
+    def __load_cell_state_from_disk(self):
+        self.cells = list()
+        name = str(input("name of save: "))
+        with open(f'{name}.txt', 'r') as f:
+            l1 = f.readline().strip('\n').split(' ')
+            WIDTH = int(l1[0])
+            HEIGHT = int(l1[1])
+            for line in f.readlines():
+                line = line.strip('\n').split(' ')[:-1]
+                self.cells.append([int(c) for c in line])
+
 
 if __name__ == '__main__':
     game = Game()
