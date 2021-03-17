@@ -1,6 +1,7 @@
 import random
 
 import pygame
+from datetime import datetime
 
 from constants import *
 
@@ -20,28 +21,35 @@ class Game(object):
 
 
     def run(self):
+        MS_PER_UPDATE = 60 / 1000
+        last_time = datetime.now().timestamp()
+        lag = 0
+
         while self.__running:
+            current_time = datetime.now().timestamp()
+            elapsed = current_time - last_time
+            lag += elapsed
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.__running = False
                     pygame.quit()
                     return
-            self.__update()
+            
+            while lag >= MS_PER_UPDATE:
+                self.__update()
+                lag -= MS_PER_UPDATE
             self.__render()
             pygame.display.flip()
+
+            last_time = current_time
 
 
     def __update(self):
         for y in range(int(HEIGHT/CH)):
             for x in range(int(WIDTH/CW)):
-                ul = 0
-                um = 0
-                ur = 0
-                ml = 0
-                mr = 0
-                ll = 0
-                lm = 0
-                lr = 0
+                ul = um = ur = ml = mr = ll = \
+                    lm = lr = 0
                 if y > 0:
                     if x > 0:
                         ul = self.cells[y-1][x-1]
@@ -84,6 +92,7 @@ class Game(object):
 
     def __init_cells(self):
         rand = random.Random()
+        rand.seed(datetime.now().microsecond)
         self.cells = list()
         for y in range(int(HEIGHT/CH)):
             self.cells.append(list())
