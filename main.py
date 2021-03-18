@@ -59,6 +59,8 @@ class Game(object):
                     self.__save_cell_state_to_disk()
                 if event.key == pygame.K_l:
                     self.__load_cell_state_from_disk()
+                if event.key == pygame.K_r:
+                    self.__init_cells()
             
         if not self.__sim_running:
             if pygame.mouse.get_pressed():
