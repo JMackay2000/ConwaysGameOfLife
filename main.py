@@ -17,8 +17,8 @@ class Game(object):
         self.cells = [] # 0 is dead, 1 is alive
         self.width = 800
         self.height = 800
-        self.cellw = 2
-        self.cellh = 2
+        self.cellw = 10
+        self.cellh = 10
         self.n_cells_w = int(self.width / self.cellw)
         self.n_cells_h = int(self.height / self.cellh)
 
