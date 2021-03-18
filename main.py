@@ -2,6 +2,7 @@ import sys
 from datetime import datetime
 
 import pygame
+import pickle
 
 BLACK = (0,0,0,1)
 WHITE = (255,255,255,1)
@@ -18,6 +19,8 @@ class Game(object):
         self.height = 800
         self.cellw = 10
         self.cellh = 10
+        self.n_cells_w = int(self.width / self.cellw)
+        self.n_cells_h = int(self.height / self.cellh)
 
 
     def init_game(self):
@@ -25,7 +28,6 @@ class Game(object):
         self.surface = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption('Conways Game of Life')
         self.__init_cells()
-
         self.__running = True
 
 
@@ -78,8 +80,8 @@ class Game(object):
             # calc rect that was pressed
             ry = pos[1] % self.cellh
             rx = pos[0] % self.cellw
-            y = (pos[1] - ry) 
-            x = (pos[0] - rx) 
+            y = pos[1] - ry 
+            x = pos[0] - rx 
             if 0 <= x <= self.width and 0 <= y <= self.height:
                 ix = int(x/self.cellw)
                 iy = int(y/self.cellh)
@@ -90,8 +92,10 @@ class Game(object):
 
 
     def __update(self):
-        for y in range(int(self.height/self.cellh)):
-            for x in range(int(self.width/self.cellw)):
+        # calculate the state of each cell given its neighbour cells
+        for y in range(self.n_cells_h):
+            for x in range(self.n_cells_w):
+                # to avoid index errors, check if neighbour cells are indexable
                 ul = um = ur = ml = mr = ll = \
                     lm = lr = 0
                 if y > 0:
@@ -124,9 +128,9 @@ class Game(object):
 
 
     def __render(self):
-        for y in range(int(self.height/self.cellh)):
-            for x in range(int(self.width/self.cellw)):
-                rect = pygame.Rect(x*self.cellw,y*self.cellh,self.cellw,self.cellh)
+        for y in range(self.n_cells_h):
+            for x in range(self.n_cells_w):
+                rect = pygame.Rect(x*self.cellw, y*self.cellh, self.cellw, self.cellh)
                 if self.cells[y][x] == 0:
                     colour = BLACK
                 else:
@@ -136,44 +140,56 @@ class Game(object):
 
     def __init_cells(self):
         self.cells = list()
-        for y in range(int(self.height/self.cellh)):
+        for y in range(self.n_cells_h):
             self.cells.append(list())
-            for x in range(int(self.width/self.cellw)):
+            for x in range(self.n_cells_w):
                 state = 0
                 self.cells[y].append(state)
 
+    """
+    @TODO
+    make pickling secure with hmac checksum to ensure
+    integrity.
+    https://docs.python.org/3/library/pickle.html
+    """
 
     def __save_cell_state_to_disk(self):
         s = f'{self.width} {self.height}\n'
         name = str(input("enter name of save: "))
-        for row in self.cells:
-            for col in row:
-                s += str(col)+' '
-            s += '\n'
-        try:
-            with open(f'{name}.txt', 'w') as f:
-                f.write(s)
-                f.close()
-            return True
-        except IOError:
-            return False
-    
+        data = {
+            'config': {
+                'width': self.width,
+                'height': self.height,
+                'cellw': self.cellw,
+                'cellh': self.cellh,
+                'n_cells_w': self.n_cells_w,
+                'n_cells_h': self.n_cells_h
+            },
+            'cells': self.cells
+        }
+        pickle.dump(data, open(f'{name}.p', 'wb'))
+
 
     def __load_cell_state_from_disk(self):
         self.cells = list()
         name = str(input("name of save: "))
-        with open(f'{name}.txt', 'r') as f:
-            l1 = f.readline().strip('\n').split(' ')
-            self.width = int(l1[0])
-            self.height = int(l1[1])
-            for line in f.readlines():
-                line = line.strip('\n').split(' ')[:-1]
-                self.cells.append([int(c) for c in line])
+        data = pickle.load(open(f'{name}.p', 'rb'))
+        self.width = data['config']['width']
+        self.height = data['config']['height']
+        self.cellw = data['config']['cellw']
+        self.cellh = data['config']['cellh']
+        self.n_cells_w = data['config']['n_cells_w']
+        self.n_cells_h = data['config']['n_cells_h']
+        self.cells = data['cells']
+        self.surface = pygame.display.set_mode((int(self.width), int(self.height)), pygame.RESIZABLE)
 
 
     def __resize(self, new_width: int, new_height: int):
+        # calculate scale factors
         sfh = new_height / self.height
         sfw = new_width / self.width
+
+        # apply scale factors
         self.width *= sfw
         self.height *= sfh
         self.cellw *= sfw
