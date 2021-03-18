@@ -17,8 +17,8 @@ class Game(object):
         self.cells = [] # 0 is dead, 1 is alive
         self.width = 800
         self.height = 800
-        self.cellw = 10
-        self.cellh = 10
+        self.cellw = 2
+        self.cellh = 2
         self.n_cells_w = int(self.width / self.cellw)
         self.n_cells_h = int(self.height / self.cellh)
 
@@ -32,7 +32,7 @@ class Game(object):
 
 
     def run(self):
-        MS_PER_UPDATE = 60 / 1000
+        MS_PER_UPDATE = 6 / 100
         last_time = datetime.now().timestamp()
         lag = 0
 
@@ -40,15 +40,10 @@ class Game(object):
             current_time = datetime.now().timestamp()
             elapsed = current_time - last_time
             lag += elapsed
+
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.__quit()
-                    return
-                elif event.type == pygame.VIDEORESIZE:
-                    self.__resize(event.w, event.h)
                 self.__input(event)
 
-            
             while lag >= MS_PER_UPDATE:
                 if self.__sim_running:
                     self.__update()
@@ -60,6 +55,10 @@ class Game(object):
 
 
     def __input(self, event):
+        if event.type == pygame.QUIT:
+            self.__quit()
+        elif event.type == pygame.VIDEORESIZE:
+            self.__resize(event.w, event.h)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 self.__sim_running = not self.__sim_running
