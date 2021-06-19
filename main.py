@@ -15,8 +15,8 @@ class Game(object):
         self.__running = False
         self.__sim_running = False
         self.cells = [] # 0 is dead, 1 is alive
-        self.width = 800
-        self.height = 800
+        self.width = 1000
+        self.height = 1000
         self.cellw = 10
         self.cellh = 10
         self.n_cells_w = int(self.width / self.cellw)
@@ -32,7 +32,7 @@ class Game(object):
 
 
     def run(self):
-        MS_PER_UPDATE = 6 / 100
+        MS_PER_UPDATE = 6/100
         last_time = datetime.now().timestamp()
         lag = 0
 
@@ -72,6 +72,7 @@ class Game(object):
                     self.__init_cells()
                 elif event.key == pygame.K_q:
                     self.__quit()
+                
         
         # draw cells with mouse if simulation isn't running
         if not self.__sim_running and pygame.mouse.get_pressed():
@@ -92,31 +93,16 @@ class Game(object):
 
     def __update(self):
         # calculate the state of each cell given its neighbour cells
+        # the surface wraps around 
         for y in range(self.n_cells_h):
             for x in range(self.n_cells_w):
-                # to avoid index errors, check if neighbour cells are indexable
-                ul = um = ur = ml = mr = ll = \
-                    lm = lr = 0
-                if y > 0:
-                    if x > 0:
-                        ul = self.cells[y-1][x-1]
-                    um = self.cells[y-1][x]
-                    if x < (self.width/self.cellw)-1:
-                        ur = self.cells[y-1][x+1]
-
-                if x > 0:
-                    ml = self.cells[y][x-1]
-                if x < (self.width/self.cellw)-1:
-                    mr = self.cells[y][x+1]
-                
-                if y < int(self.height/self.cellh) - 1:
-                    if x > 0:
-                        ll = self.cells[y+1][x-1]
-                    if x < (self.width/self.cellw)-1:
-                        lr = self.cells[y+1][x+1]
-                    lm = self.cells[y+1][x]
-                
-                n_neighbours = ul + um + ur + ml + mr + ll + lm + lr
+                ly = (y-1)%self.n_cells_h # 'lower' row
+                uy = (y+1)%self.n_cells_h # 'upper' row
+                lx = (x-1)%self.n_cells_w # left cell
+                rx = (x+1)%self.n_cells_w # right cell
+                n_neighbours = self.cells[ly][lx] + self.cells[ly][x] + self.cells[ly][rx] + \
+                    self.cells[y][lx] + self.cells[y][rx] + \
+                        self.cells[uy][lx] + self.cells[uy][x] + self.cells[uy][rx]
 
                 if self.cells[y][x] == 1 and 2 <= n_neighbours <= 3:
                     self.cells[y][x] = 1
