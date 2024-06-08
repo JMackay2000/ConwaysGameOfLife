@@ -175,11 +175,11 @@ class Game(object):
         sfw = new_width / self.width
 
         # apply scale factors
-        self.width *= sfw
-        self.height *= sfh
-        self.cellw *= sfw
-        self.cellh *= sfh
-        self.surface = pygame.display.set_mode((int(self.width), int(self.height)), pygame.RESIZABLE)
+        self.width = int(self.width * sfw)
+        self.height = int(self.height * sfh)
+        self.cellw = int(self.cellw * sfw)
+        self.cellh = int(self.cellh * sfh)
+        self.surface = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
 
 
     def __quit(self):
