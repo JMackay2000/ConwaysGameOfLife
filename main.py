@@ -131,12 +131,6 @@ class Game(object):
                 state = 0
                 self.cells[y].append(state)
 
-    """
-    @TODO
-    make pickling secure with hmac checksum to ensure
-    integrity.
-    https://docs.python.org/3/library/pickle.html
-    """
 
     def __save_cell_state_to_disk(self):
         s = f'{self.width} {self.height}\n'
